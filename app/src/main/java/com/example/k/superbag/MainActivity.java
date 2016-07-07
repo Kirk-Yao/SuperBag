@@ -1,24 +1,35 @@
 package com.example.k.superbag;
 
-import android.app.FragmentManager;
+import android.content.Intent;
+import android.content.SharedPreferences;
+import android.database.sqlite.SQLiteDatabase;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.net.Uri;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
+import android.support.design.widget.NavigationView;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentTransaction;
-import android.util.Log;
-import android.view.View;
-import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
 
 import com.example.k.superbag.Fragment.FirstPageFragment;
 import com.example.k.superbag.Fragment.MemoFragment;
+import com.example.k.superbag.activity.EditActivity;
+import com.example.k.superbag.activity.SettingsActivity;
+import com.example.k.superbag.utils.SuperbagDatabaseHelper;
+
+import java.io.FileNotFoundException;
+
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
@@ -39,8 +50,10 @@ public class MainActivity extends AppCompatActivity
 
         initView();
         initListener();
+        initDatabase();
         fm  = getSupportFragmentManager();
         showFragment(0);
+
     }
 
     private void initView(){
@@ -56,15 +69,12 @@ public class MainActivity extends AppCompatActivity
     private void initListener(){
         setSupportActionBar(toolbar);
 
-
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
+                startActivity(new Intent(MainActivity.this, EditActivity.class));
             }
         });
-
 
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
                 this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
@@ -72,6 +82,14 @@ public class MainActivity extends AppCompatActivity
         toggle.syncState();
 
         navigationView.setNavigationItemSelectedListener(this);
+    }
+
+    //初始化数据库
+    private void initDatabase(){
+        SuperbagDatabaseHelper dbHelper = new SuperbagDatabaseHelper(this,"superbag.db",null,1);
+        SQLiteDatabase sbDatabase = dbHelper.getWritableDatabase();
+        //------测试插入数据
+        dbHelper.insertToDB(sbDatabase,"电影","独立日",false,2,"6-28","");
     }
 
     //用于显示
@@ -155,13 +173,13 @@ public class MainActivity extends AppCompatActivity
         int id = item.getItemId();
 
         if (id == R.id.nav_firstPage) {
-            // Handle the camera action
+            showFragment(0);
         } else if (id == R.id.nav_memo) {
-
+            showFragment(1);
         } else if (id == R.id.nav_diary) {
 
         } else if (id == R.id.nav_settings) {
-
+            startActivity(new Intent(MainActivity.this, SettingsActivity.class));
         } else if (id == R.id.nav_quit) {
 
         }
@@ -170,4 +188,5 @@ public class MainActivity extends AppCompatActivity
         drawer.closeDrawer(GravityCompat.START);
         return true;
     }
+
 }

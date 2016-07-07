@@ -10,17 +10,32 @@
         android:background="@color/darkGray"
         android:padding="10dp">
 
-        <Button
-            android:layout_width="25dp"
-            android:layout_height="25dp"
-            android:id="@+id/edit_back"
-            android:layout_alignParentLeft="true"
-            android:background="@drawable/back_white"/>
-        <Button
-            android:layout_width="25dp"
-            android:layout_height="25dp"
+        <LinearLayout
+            android:layout_width="50dp"
+            android:id="@+id/edit_back_ll"
+            android:layout_height="wrap_content">
+            <Button
+                android:layout_width="25dp"
+                android:layout_height="25dp"
+                android:id="@+id/edit_back"
+                android:layout_alignParentLeft="true"
+                android:background="@drawable/back_white"/>
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="50dp"
             android:layout_alignParentRight="true"
-            android:background="@drawable/save"/>
+            android:orientation="horizontal"
+            android:id="@+id/edit_save_ll"
+            android:layout_height="wrap_content">
+            <Button
+                android:layout_width="25dp"
+                android:layout_height="25dp"
+                android:id="@+id/edit_save"
+                android:layout_marginLeft="15dp"
+                android:background="@drawable/save"/>
+        </LinearLayout>
+
     </RelativeLayout>
 
     <RelativeLayout
@@ -33,6 +48,7 @@
             android:scaleType="centerCrop"
             android:layout_centerVertical="true"
             android:layout_alignParentLeft="true"
+            android:src="@drawable/pic4"
             android:id="@+id/edit_head_icon"/>
         <TextView
             android:layout_width="wrap_content"
@@ -87,13 +103,80 @@
         android:layout_height="2dp"
         android:background="@color/gray"></View>
 
-    <EditText
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:orientation="vertical"
+        >
+        <EditText
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:padding="10dp"
+            android:id="@+id/edit_et"
+            android:background="@null"
+            android:hint="写点什么吧..."/>
+    </LinearLayout>
+
+
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:padding="10dp"
-        android:id="@+id/edit_et"
-        android:background="@null"
-        android:hint="写点什么吧..."/>
+        android:padding="5dp"
+        android:background="@color/gray"
+        android:orientation="horizontal">
 
-    
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:gravity="center_horizontal"
+            android:layout_weight="1">
+            <Button
+                android:layout_width="35dp"
+                android:layout_height="35dp"
+
+                android:background="@drawable/pic"
+                android:id="@+id/edit_pic_bt"/>
+
+        </LinearLayout>
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:gravity="center_horizontal"
+            android:layout_weight="1">
+            <Button
+                android:layout_width="30dp"
+                android:layout_height="30dp"
+                android:layout_marginTop="2dp"
+                android:background="@drawable/face"
+                android:id="@+id/edit_face_bt"/>
+
+        </LinearLayout>
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:gravity="center_horizontal"
+            android:layout_weight="1">
+            <Button
+                android:layout_width="35dp"
+                android:layout_height="35dp"
+                android:background="@drawable/weather"
+                android:id="@+id/edit_weather_bt"/>
+
+        </LinearLayout>
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:gravity="center_horizontal"
+            android:layout_weight="1">
+            <Button
+                android:layout_width="30dp"
+                android:layout_height="30dp"
+                android:layout_marginTop="2dp"
+                android:background="@drawable/location"
+                android:id="@+id/edit_location_bt"/>
+
+        </LinearLayout>
+
+    </LinearLayout>
 </LinearLayout>

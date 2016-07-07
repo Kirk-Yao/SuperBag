@@ -5,4 +5,10 @@
     <string name="navigation_drawer_close">Close navigation drawer</string>
 
     <string name="action_settings">Settings</string>
+    <string name="database_name">superbag</string>
+
+    <string name="headIcon_name">headIcon</string>
+    <string name="headIcon_Uri">headIconUri</string>
+    <string name="bgName">bgName</string>
+    <string name="bgUri">bgUri</string>
 </resources>
