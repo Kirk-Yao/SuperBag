@@ -2,9 +2,9 @@ package com.example.k.superbag.activity;
 
 import android.annotation.TargetApi;
 import android.app.Activity;
-import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -18,6 +18,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.k.superbag.R;
+import com.example.k.superbag.utils.GetImageUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -49,6 +50,15 @@ public class SettingsActivity extends Activity implements View.OnClickListener{
         changeHeadStatus = (TextView)findViewById(R.id.change_head_status);
         changeBgStatus = (TextView)findViewById(R.id.change_bg_status);
         aboutLL = (LinearLayout)findViewById(R.id.about_ll);
+
+        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(SettingsActivity.this);
+        if (sp.getBoolean("HEAD_CHANGED",false)){
+            changeHeadStatus.setText("自定义");
+        }
+        if (sp.getBoolean("BG_CHANGED",false)){
+            changeBgStatus.setText("自定义");
+        }
+
     }
 
     private void initListener(){
@@ -74,17 +84,21 @@ public class SettingsActivity extends Activity implements View.OnClickListener{
         }
     }
 
-    //从相册选取,参数用于确定头像还是背景
-    //头像为1，背景为2
+    /**
+     *  从相册选取,参数用于确定头像还是背景
+     *  @param i 头像为1，背景为2
+     */
+    //在6.0以上有bug,其他未测试
     private void selectFromAlbum(int i){
         createUri(i);
-        /*Intent intent = new Intent("android.intent.action.GET_CONTENT");
-        intent.setType("image*//*");
+        Intent intent = new Intent("android.intent.action.GET_CONTENT");
+        intent.setType("image/*");
         intent.putExtra("crop",true);
         intent.putExtra("scale",true);
         intent.putExtra(MediaStore.EXTRA_OUTPUT,imageUri);
-        startActivityForResult(intent,i);*/
+        startActivityForResult(intent,i);
 
+/*
         try {
             Intent intent = new Intent(Intent.ACTION_GET_CONTENT, null);
             intent.setType("image");
@@ -101,6 +115,7 @@ public class SettingsActivity extends Activity implements View.OnClickListener{
                 e.printStackTrace();
             }
         }
+*/
 
        /* if (Build.VERSION.SDK_INT < 19) {
             Intent intent = new Intent();
@@ -166,9 +181,11 @@ public class SettingsActivity extends Activity implements View.OnClickListener{
                 PreferenceManager.getDefaultSharedPreferences(SettingsActivity.this).edit();
         if (i == 1) {
             editor.putString("headIconUri", imageUri.toString());
+            editor.putBoolean("HEAD_CHANGED",true);
             Toast.makeText(SettingsActivity.this,"头像更换成功！",Toast.LENGTH_SHORT).show();
         } else {
             editor.putString("bgUri",imageUri.toString());
+            editor.putBoolean("BG_CHANGED",true);
             Toast.makeText(SettingsActivity.this,"背景更换成功！",Toast.LENGTH_SHORT).show();
         }
         editor.commit();

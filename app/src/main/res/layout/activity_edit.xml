@@ -93,7 +93,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:id="@+id/edit_memo"
-                android:text="记事"/>
+                android:text="备忘"/>
         </RadioGroup>
 
     </RelativeLayout>
@@ -123,6 +123,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:padding="5dp"
+        android:id="@+id/edit_bottom_LL"
         android:background="@color/gray"
         android:orientation="horizontal">
 

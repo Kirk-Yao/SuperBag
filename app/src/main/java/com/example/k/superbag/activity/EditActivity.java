@@ -2,51 +2,54 @@ package com.example.k.superbag.activity;
 
 import android.app.Activity;
 import android.app.AlertDialog;
-import android.app.Dialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.RadialGradient;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
 import android.util.Log;
 import android.view.View;
-import android.view.Window;
-import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.k.superbag.R;
+import com.example.k.superbag.bean.ItemBean;
 import com.example.k.superbag.others.GetTime;
-import com.example.k.superbag.utils.DialogUtils;
+import com.example.k.superbag.utils.GetImageUtils;
+import com.example.k.superbag.utils.SuperbagDatabaseHelper;
 
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.net.URI;
 
 /**
  * Created by K on 2016/6/26.
  */
+
+// 不能选标签，提醒时间等
 public class EditActivity extends Activity implements View.OnClickListener,RadioGroup.OnCheckedChangeListener{
 
     private Button backBT,saveBT,picBT,faceBT,weatherBT,locationBT;
-    private EditText editText;
+    private EditText contentET;
     private RadioGroup radioGroup;
     private ImageView headIcon;
     private TextView oldTime;
-    private LinearLayout backLL,saveLL;
+    private LinearLayout backLL,saveLL,bottomLL;
+    private RadioButton editDiary,editMemo;
 
     private boolean hasSaved = false;
     private Uri imageUri;
+    private boolean isMemo;
+    private boolean isEditable = true;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -65,12 +68,20 @@ public class EditActivity extends Activity implements View.OnClickListener,Radio
         faceBT = (Button)findViewById(R.id.edit_face_bt);
         weatherBT = (Button)findViewById(R.id.edit_weather_bt);
         locationBT = (Button)findViewById(R.id.edit_location_bt);
-        editText = (EditText)findViewById(R.id.edit_et);
+        contentET = (EditText)findViewById(R.id.edit_et);
         radioGroup = (RadioGroup)findViewById(R.id.edit_rg);
+        editMemo = (RadioButton)findViewById(R.id.edit_memo);
+        editDiary = (RadioButton)findViewById(R.id.edit_diary);
         headIcon = (ImageView)findViewById(R.id.edit_head_icon);
         oldTime = (TextView) findViewById(R.id.edit_time);
         backLL = (LinearLayout)findViewById(R.id.edit_back_ll);
         saveLL = (LinearLayout)findViewById(R.id.edit_save_ll);
+        bottomLL = (LinearLayout)findViewById(R.id.edit_bottom_LL);
+
+        Bitmap head = GetImageUtils.getBMFromUri(this,"headIconUri");
+        if (head != null){
+            headIcon.setImageBitmap(head);
+        }
     }
 
     private void initListener(){
@@ -87,14 +98,28 @@ public class EditActivity extends Activity implements View.OnClickListener,Radio
 
     private void initData(){
         GetTime gt = new GetTime();
-        Log.d("年份",gt.getYear()+"");
+        /*Log.d("年份",gt.getYear()+"");
         Log.d("月",gt.getMonth()+"");
         Log.d("日",gt.getDay()+"");
         Log.d("小时",gt.getHour()+"");
-        Log.d("分钟",gt.getMin()+"");
+        Log.d("分钟",gt.getMin()+"");*/
         oldTime.setText(gt.getYear()+"-"+gt.getMonth()+"-"+gt.getDay());
 
-//        oldTime.setText(gt.getYear());
+        //如果是从ListView点击进入活动，则初始化数据
+        Intent intent = getIntent();
+        int lineNum = intent.getIntExtra("lineIndex",-1);
+        if (lineNum != -1){
+            ItemBean item = SuperbagDatabaseHelper.queryBD(lineNum);
+            bottomLL.setVisibility(View.GONE);
+            saveBT.setBackground(getResources().getDrawable(R.drawable.edit));
+            contentET.setClickable(false);
+            contentET.setText(item.getContent());
+            if(item.getIsMemo().equals("true")){
+                editMemo.setChecked(true);
+                editDiary.setChecked(false);
+            }
+            isEditable = false;
+        }
     }
 
     @Override
@@ -124,12 +149,22 @@ public class EditActivity extends Activity implements View.OnClickListener,Radio
                 break;
             case R.id.edit_save_ll:
             case R.id.edit_save:
-                String content = editText.getText().toString();
-                Log.d("比较结果，=",(content.trim().equals(""))+"");
-                if (content.trim().equals("")){
-                    Toast.makeText(EditActivity.this,"内容不能为空哦",Toast.LENGTH_SHORT).show();
+                if (!isEditable){
+                    saveBT.setBackground(getResources().getDrawable(R.drawable.save));
+                    bottomLL.setVisibility(View.VISIBLE);
+                    contentET.setClickable(true);
+                    isEditable = true;
+                } else {
+                    String content = contentET.getText().toString();
+                    Log.d("比较结果，=", (content.trim().equals("")) + "");
+                    if (content.trim().equals("")) {
+                        Toast.makeText(EditActivity.this, "内容不能为空哦", Toast.LENGTH_SHORT).show();
+                    } else {
+                        //执行保存操作
+                        saveData();
+                        finish();
+                    }
                 }
-                //执行保存操作
 
                 break;
             case R.id.edit_pic_bt:
@@ -158,12 +193,21 @@ public class EditActivity extends Activity implements View.OnClickListener,Radio
     public void onCheckedChanged(RadioGroup radioGroup, int i) {
         switch (i){
             case R.id.edit_memo:
-
+                isMemo = true;
                 break;
             case R.id.edit_diary:
-
+                isMemo = false;
                 break;
         }
+    }
+
+    //保存数据
+    private void saveData(){
+        String content = contentET.getText().toString().trim();
+        SuperbagDatabaseHelper dbHelper = new SuperbagDatabaseHelper(this,"superbag.db",null,1);
+        GetTime gt = new GetTime();
+        dbHelper.insertToDB("暂无分类",content,isMemo,2,gt.getSpecificTime(),"");
+        Log.d("已执行保存操作","");
     }
 
     //拍照

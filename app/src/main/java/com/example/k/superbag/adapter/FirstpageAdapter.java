@@ -1,7 +1,9 @@
 package com.example.k.superbag.adapter;
 
+import android.content.ClipData;
 import android.content.Context;
 import android.media.Image;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -21,18 +23,21 @@ import java.util.List;
  */
 public class FirstpageAdapter extends ArrayAdapter<ItemBean> {
 
-    private int resourceId;
     private List<ListItem> lists = FirstPageFragment.list;
+    private List<ItemBean> itemBeanList;
 
     public FirstpageAdapter(Context context, int resource, List<ItemBean> objects) {
         super(context, resource, objects);
-        resourceId = resource;
+        itemBeanList = objects;
     }
 
     //根据图片数量的不同加载不同的布局
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
+        //------------
+        ItemBean itemBean = getItem(position);
         int type = getItemViewType(position);
+        Log.d("类型是",type+"");
         switch (type){
             case ListItem.TYPE_NO_PIC:
                 Pic0ViewHolder holder0 = null;
@@ -52,7 +57,11 @@ public class FirstpageAdapter extends ArrayAdapter<ItemBean> {
                 }
                 //-----------------
                 //具体逻辑处理
-
+//                ItemBean itemBean = itemBeanList.get(position);
+                holder0.tag1.setText(itemBean.getTag());
+                holder0.content.setText(itemBean.getContent());
+                holder0.oldTime.setText(itemBean.getOldTime());
+                Log.d("执行到","没有图片的adapter");
                 break;
             case ListItem.TYPE_ONE_PIC:
                 Pic1ViewHolder holder1 = null;
@@ -104,10 +113,11 @@ public class FirstpageAdapter extends ArrayAdapter<ItemBean> {
 
     @Override
     public int getItemViewType(int position) {
-        if (lists != null && position < lists.size()){
+        /*if (lists != null && position < lists.size()){
             return lists.get(position).getType();
         }
-        return super.getItemViewType(position);
+        return super.getItemViewType(position);*/
+        return lists.get(0).getType();
     }
 
     @Override

@@ -1,13 +1,11 @@
 package com.example.k.superbag;
 
 import android.content.Intent;
-import android.content.SharedPreferences;
+import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Bundle;
-import android.preference.PreferenceManager;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.NavigationView;
 import android.support.v4.app.Fragment;
@@ -21,14 +19,16 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.ImageView;
+import android.widget.TextView;
 
 import com.example.k.superbag.Fragment.FirstPageFragment;
 import com.example.k.superbag.Fragment.MemoFragment;
 import com.example.k.superbag.activity.EditActivity;
 import com.example.k.superbag.activity.SettingsActivity;
+import com.example.k.superbag.utils.GetImageUtils;
 import com.example.k.superbag.utils.SuperbagDatabaseHelper;
 
-import java.io.FileNotFoundException;
 
 
 public class MainActivity extends AppCompatActivity
@@ -38,6 +38,8 @@ public class MainActivity extends AppCompatActivity
     private FloatingActionButton fab;
     private DrawerLayout drawer;
     private NavigationView navigationView;
+    private ImageView navHeaderIV;
+    private TextView signatureTV;
 
     private Fragment[] fragments = new Fragment[3];
     private android.support.v4.app.FragmentManager fm;
@@ -50,7 +52,7 @@ public class MainActivity extends AppCompatActivity
 
         initView();
         initListener();
-        initDatabase();
+//        initDatabase();
         fm  = getSupportFragmentManager();
         showFragment(0);
 
@@ -62,8 +64,16 @@ public class MainActivity extends AppCompatActivity
         drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         navigationView = (NavigationView) findViewById(R.id.nav_view);
 
+        View view = navigationView.getHeaderView(0);
+        navHeaderIV = (ImageView)view.findViewById(R.id.nav_header_iv);
+        signatureTV = (TextView) navigationView.findViewById(R.id.nav_header_tv);
         //-----
         toolbar.getBackground().setAlpha(0);
+        //设置抽屉头像
+        Bitmap headIcon = GetImageUtils.getBMFromUri(this,"headIconUri");
+        if (headIcon != null){
+            navHeaderIV.setImageBitmap(headIcon);
+        }
     }
 
     private void initListener(){
@@ -84,14 +94,6 @@ public class MainActivity extends AppCompatActivity
         navigationView.setNavigationItemSelectedListener(this);
     }
 
-    //初始化数据库
-    private void initDatabase(){
-        SuperbagDatabaseHelper dbHelper = new SuperbagDatabaseHelper(this,"superbag.db",null,1);
-        SQLiteDatabase sbDatabase = dbHelper.getWritableDatabase();
-        //------测试插入数据
-        dbHelper.insertToDB(sbDatabase,"电影","独立日",false,2,"6-28","");
-    }
-
     //用于显示
     private void showFragment(int index){
         if (currentIndex == index){
@@ -100,8 +102,6 @@ public class MainActivity extends AppCompatActivity
         currentIndex = index;
         FragmentTransaction transaction = fm.beginTransaction();
         hideAllFragment(transaction);
-        Log.d("已隐藏","ssss");
-        Log.d("现在是",currentIndex+"");
         switch (index){
             case 0:
                 if (fragments[0] == null){
@@ -110,7 +110,6 @@ public class MainActivity extends AppCompatActivity
                 }
                 transaction.show(fragments[0]);
                 transaction.commit();
-                Log.d("已显示","sss");
                 break;
             case 1:
                 if (fragments[1] == null){
