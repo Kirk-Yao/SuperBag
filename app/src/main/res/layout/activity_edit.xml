@@ -2,6 +2,7 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:orientation="vertical"
     android:layout_width="match_parent"
+    android:id="@+id/edit_ll"
     android:layout_height="match_parent">
 
     <RelativeLayout
@@ -18,7 +19,6 @@
                 android:layout_width="25dp"
                 android:layout_height="25dp"
                 android:id="@+id/edit_back"
-                android:layout_alignParentLeft="true"
                 android:background="@drawable/back_white"/>
         </LinearLayout>
 
@@ -103,6 +103,30 @@
         android:layout_height="2dp"
         android:background="@color/gray"></View>
 
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="8dp">
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="30dp"
+            android:text="添加标签"
+            android:background="@null"
+            android:layout_alignParentLeft="true"/>
+        <Button
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:id="@+id/edit_alarm"
+            android:layout_marginRight="10dp"
+            android:layout_alignParentRight="true"
+            android:background="@drawable/alarm_black"/>
+    </RelativeLayout>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="2dp"
+        android:background="@color/gray"></View>
+
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
@@ -180,4 +204,5 @@
         </LinearLayout>
 
     </LinearLayout>
+
 </LinearLayout>

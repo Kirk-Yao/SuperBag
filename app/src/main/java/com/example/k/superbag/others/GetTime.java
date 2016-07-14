@@ -31,6 +31,9 @@ public class GetTime {
     }
 
     public String getMin() {
+        if (min < 10){
+            return "0"+min;
+        }
         return min+"";
     }
 
@@ -46,6 +49,9 @@ public class GetTime {
     }
 
     public String getHour() {
+        if (hour < 10){
+            return "0"+hour;
+        }
         return hour+"";
     }
 

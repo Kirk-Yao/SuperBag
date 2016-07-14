@@ -1,27 +1,41 @@
 package com.example.k.superbag.activity;
 
+import android.annotation.TargetApi;
 import android.app.Activity;
+import android.app.AlarmManager;
 import android.app.AlertDialog;
+import android.app.DatePickerDialog;
+import android.app.PendingIntent;
+import android.app.TimePickerDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.drawable.BitmapDrawable;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
+import android.support.v4.view.ViewPager;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.DatePicker;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.PopupWindow;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.TextView;
+import android.widget.TimePicker;
 import android.widget.Toast;
 
 import com.example.k.superbag.R;
+import com.example.k.superbag.adapter.PopupPagerAdapter;
 import com.example.k.superbag.bean.ItemBean;
 import com.example.k.superbag.others.GetTime;
 import com.example.k.superbag.utils.GetImageUtils;
@@ -30,26 +44,36 @@ import com.example.k.superbag.utils.SuperbagDatabaseHelper;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.List;
 
 /**
  * Created by K on 2016/6/26.
  */
 
 // 不能选标签，提醒时间等
-public class EditActivity extends Activity implements View.OnClickListener,RadioGroup.OnCheckedChangeListener{
+public class EditActivity extends Activity implements View.OnClickListener,RadioGroup.OnCheckedChangeListener,ViewPager.OnPageChangeListener{
 
-    private Button backBT,saveBT,picBT,faceBT,weatherBT,locationBT;
+    private Button backBT,saveBT,picBT,faceBT,weatherBT,locationBT,editAlarm;
     private EditText contentET;
     private RadioGroup radioGroup;
     private ImageView headIcon;
     private TextView oldTime;
     private LinearLayout backLL,saveLL,bottomLL;
     private RadioButton editDiary,editMemo;
+    private PopupWindow popupWindow,alarmPOpup;
+    private ImageView popupPic1,popupPic2,popupPic3,popupPic4;
+    private ViewPager viewPager;
+    private Button setTimeBT,doneBT,cancelBT;
 
     private boolean hasSaved = false;
     private Uri imageUri;
     private boolean isMemo;
+    private String previousTime,newTime = "-1";
     private boolean isEditable = true;
+    private List<View> popupViewList;
+    private boolean clickable = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -57,6 +81,7 @@ public class EditActivity extends Activity implements View.OnClickListener,Radio
         setContentView(R.layout.activity_edit);
 
         initView();
+        initPopup();
         initListener();
         initData();
     }
@@ -77,11 +102,33 @@ public class EditActivity extends Activity implements View.OnClickListener,Radio
         backLL = (LinearLayout)findViewById(R.id.edit_back_ll);
         saveLL = (LinearLayout)findViewById(R.id.edit_save_ll);
         bottomLL = (LinearLayout)findViewById(R.id.edit_bottom_LL);
-
+        editAlarm = (Button)findViewById(R.id.edit_alarm);
+        //设置头像
         Bitmap head = GetImageUtils.getBMFromUri(this,"headIconUri");
         if (head != null){
             headIcon.setImageBitmap(head);
         }
+
+        View v = LayoutInflater.from(this).inflate(R.layout.popup_pic,null);
+        popupPic1 = (ImageView)v.findViewById(R.id.popup_pic1);
+        popupPic2 = (ImageView)v.findViewById(R.id.popup_pic2);
+        popupPic3 = (ImageView)v.findViewById(R.id.popup_pic3);
+        popupPic4 = (ImageView)v.findViewById(R.id.popup_pic4);
+        popupViewList = new ArrayList<>();
+        popupViewList.add(v);
+    }
+
+    private void initPopup(){
+        View view = LayoutInflater.from(this).inflate(R.layout.popup_window,null);
+        popupWindow = new PopupWindow(view, ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        viewPager = (ViewPager) view.findViewById(R.id.popup_pager);
+        PopupPagerAdapter pagerAdapter = new PopupPagerAdapter(popupViewList);
+        viewPager.setAdapter(pagerAdapter);
+        viewPager.setOnPageChangeListener(this);
+        //设置点击外部，popup消失
+        popupWindow.setOutsideTouchable(true);
+        popupWindow.setBackgroundDrawable(new BitmapDrawable());
+
     }
 
     private void initListener(){
@@ -94,6 +141,11 @@ public class EditActivity extends Activity implements View.OnClickListener,Radio
         radioGroup.setOnCheckedChangeListener(this);
         backLL.setOnClickListener(this);
         saveLL.setOnClickListener(this);
+        popupPic1.setOnClickListener(this);
+        popupPic2.setOnClickListener(this);
+        popupPic3.setOnClickListener(this);
+        popupPic4.setOnClickListener(this);
+        editAlarm.setOnClickListener(this);
     }
 
     private void initData(){
@@ -103,6 +155,7 @@ public class EditActivity extends Activity implements View.OnClickListener,Radio
         Log.d("日",gt.getDay()+"");
         Log.d("小时",gt.getHour()+"");
         Log.d("分钟",gt.getMin()+"");*/
+
         oldTime.setText(gt.getYear()+"-"+gt.getMonth()+"-"+gt.getDay());
 
         //如果是从ListView点击进入活动，则初始化数据
@@ -118,8 +171,14 @@ public class EditActivity extends Activity implements View.OnClickListener,Radio
                 editMemo.setChecked(true);
                 editDiary.setChecked(false);
             }
+            if (!item.getNewTime().equals("-1")){
+                editAlarm.setBackground(getResources().getDrawable(R.drawable.alarm_blue));
+                clickable = true;
+            }
             isEditable = false;
         }
+        doneBT.setEnabled(clickable);
+        cancelBT.setEnabled(clickable);
     }
 
     @Override
@@ -168,7 +227,15 @@ public class EditActivity extends Activity implements View.OnClickListener,Radio
 
                 break;
             case R.id.edit_pic_bt:
-                final AlertDialog.Builder builder = new AlertDialog.Builder(EditActivity.this);
+                Log.d("已点击","插入图片");
+                LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+//                params.setMargins(0,0,0,600);
+//                params.bottomMargin = 400;
+//                bottomLL.setLayoutParams(params);
+//                popupWindow.showAsDropDown(view);
+//                popupWindow.showAtLocation(findViewById(R.id.edit_ll),Gravity.BOTTOM,0,0);
+                Log.d("popup是否显示：",popupWindow.isShowing()+"");
+                /*final AlertDialog.Builder builder = new AlertDialog.Builder(EditActivity.this);
                 builder.setMessage("选择图片来源")
                         .setNegativeButton("拍照", new DialogInterface.OnClickListener() {
                             @Override
@@ -182,11 +249,82 @@ public class EditActivity extends Activity implements View.OnClickListener,Radio
                                 selectFromAlbum();
                             }
                         });
-                builder.show();
+                builder.show();*/
                 break;
-
+            case R.id.edit_alarm:
+                setAlarmPopup();
+                break;
+            case R.id.set_time_bt:
+                setTime();
+                break;
+            case R.id.done_bt:
+                editAlarm.setBackground(getResources().getDrawable(R.drawable.alarm_black));
+                Toast.makeText(EditActivity.this,"已标记为已完成",Toast.LENGTH_SHORT).show();
+                break;
+            case R.id.cancel_bt:
+                editAlarm.setBackground(getResources().getDrawable(R.drawable.alarm_black));
+                Toast.makeText(EditActivity.this,"已取消提醒",Toast.LENGTH_SHORT).show();
+                doneBT.setEnabled(false);
+                break;
         }
     }
+
+    private void setAlarmPopup(){
+        View v = LayoutInflater.from(this).inflate(R.layout.popup_alarm,null);
+        alarmPOpup = new PopupWindow(v, ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        //设置点击外部popup消失
+        alarmPOpup.setOutsideTouchable(true);
+        alarmPOpup.setBackgroundDrawable(new BitmapDrawable());
+
+        setTimeBT = (Button)v.findViewById(R.id.set_time_bt);
+        doneBT = (Button)v.findViewById(R.id.done_bt);
+        cancelBT = (Button)v.findViewById(R.id.cancel_bt);
+        setTimeBT.setOnClickListener(this);
+        doneBT.setOnClickListener(this);
+        cancelBT.setOnClickListener(this);
+        alarmPOpup.showAsDropDown(findViewById(R.id.edit_alarm));
+    }
+
+    private void setTime(){
+        Calendar calendar = Calendar.getInstance();
+        final Calendar c = Calendar.getInstance();
+        c.setTimeInMillis(System.currentTimeMillis());
+        //要把timePicker写在前面，才会先显示datePicker,原因不知。。。
+        TimePickerDialog timePicker = new TimePickerDialog(this, 0,
+                new TimePickerDialog.OnTimeSetListener() {
+                    @Override
+                    public void onTimeSet(TimePicker timePicker, int i, int i1) {
+
+                        c.set(Calendar.HOUR_OF_DAY,i);
+                        c.set(Calendar.MINUTE,i1);
+                        Intent intent = new Intent(EditActivity.this,AlarmActivity.class);
+                        PendingIntent pt = PendingIntent.getActivity(EditActivity.this,0,intent,0);
+                        AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
+                        alarmManager.set(AlarmManager.RTC_WAKEUP,c.getTimeInMillis(),pt);
+                        alarmPOpup.dismiss();
+                        Toast.makeText(EditActivity.this,"提醒设置成功",Toast.LENGTH_SHORT).show();
+
+                        editAlarm.setBackground(getResources().getDrawable(R.drawable.alarm_blue));
+                        clickable = true;
+                        cancelBT.setEnabled(clickable);
+                        doneBT.setEnabled(clickable);
+                    }
+                },calendar.get(Calendar.HOUR_OF_DAY),calendar.get(Calendar.MINUTE),false);
+        timePicker.show();
+
+        DatePickerDialog datePicker = new DatePickerDialog(this, 0,
+                new DatePickerDialog.OnDateSetListener() {
+            @Override
+            public void onDateSet(DatePicker datePicker, int i, int i1, int i2) {
+                c.set(i,i1,i2);
+            }
+        }, calendar.get(Calendar.YEAR),
+                calendar.get(Calendar.MONTH), calendar.get(Calendar.DAY_OF_MONTH));
+        datePicker.show();
+
+        newTime = c.getTimeInMillis()+"";
+    }
+
 
     //用于确定单选钮的选中情况
     @Override
@@ -206,7 +344,7 @@ public class EditActivity extends Activity implements View.OnClickListener,Radio
         String content = contentET.getText().toString().trim();
         SuperbagDatabaseHelper dbHelper = new SuperbagDatabaseHelper(this,"superbag.db",null,1);
         GetTime gt = new GetTime();
-        dbHelper.insertToDB("暂无分类",content,isMemo,2,gt.getSpecificTime(),"");
+        dbHelper.insertToDB("暂无分类",content,isMemo,2,gt.getSpecificTime(),newTime);
         Log.d("已执行保存操作","");
     }
 
@@ -270,5 +408,20 @@ public class EditActivity extends Activity implements View.OnClickListener,Radio
     protected void onDestroy(){
         super.onDestroy();
         Log.d("退出执行","");
+    }
+
+    @Override
+    public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
+
+    }
+
+    @Override
+    public void onPageSelected(int position) {
+
+    }
+
+    @Override
+    public void onPageScrollStateChanged(int state) {
+
     }
 }
