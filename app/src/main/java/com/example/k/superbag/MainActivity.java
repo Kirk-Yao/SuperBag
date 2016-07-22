@@ -1,11 +1,15 @@
 package com.example.k.superbag;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Bitmap;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.NavigationView;
 import android.support.v4.app.Fragment;
@@ -20,12 +24,14 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.example.k.superbag.Fragment.FirstPageFragment;
 import com.example.k.superbag.Fragment.MemoFragment;
 import com.example.k.superbag.activity.EditActivity;
 import com.example.k.superbag.activity.SettingsActivity;
+import com.example.k.superbag.others.Constant;
 import com.example.k.superbag.utils.GetImageUtils;
 import com.example.k.superbag.utils.SuperbagDatabaseHelper;
 
@@ -40,6 +46,7 @@ public class MainActivity extends AppCompatActivity
     private NavigationView navigationView;
     private ImageView navHeaderIV;
     private TextView signatureTV;
+    private LinearLayout navHeaderLL;
 
     private Fragment[] fragments = new Fragment[3];
     private android.support.v4.app.FragmentManager fm;
@@ -50,6 +57,7 @@ public class MainActivity extends AppCompatActivity
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        Log.d("执行到了","main的onCreate()");
         initView();
         initListener();
 //        initDatabase();
@@ -64,16 +72,13 @@ public class MainActivity extends AppCompatActivity
         drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         navigationView = (NavigationView) findViewById(R.id.nav_view);
 
+        //获取抽屉头像和背景的方法
         View view = navigationView.getHeaderView(0);
         navHeaderIV = (ImageView)view.findViewById(R.id.nav_header_iv);
-        signatureTV = (TextView) navigationView.findViewById(R.id.nav_header_tv);
+        navHeaderLL = (LinearLayout)view.findViewById(R.id.nav_header_LL);
+        signatureTV = (TextView) view.findViewById(R.id.nav_header_tv);
         //-----
         toolbar.getBackground().setAlpha(0);
-        //设置抽屉头像
-        Bitmap headIcon = GetImageUtils.getBMFromUri(this,"headIconUri");
-        if (headIcon != null){
-            navHeaderIV.setImageBitmap(headIcon);
-        }
     }
 
     private void initListener(){
@@ -186,6 +191,28 @@ public class MainActivity extends AppCompatActivity
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         drawer.closeDrawer(GravityCompat.START);
         return true;
+    }
+
+    //可以在返回该页面时，刷新抽屉头像和背景
+    @Override
+    public void onStart(){
+        //设置抽屉头像
+        Bitmap headIcon = GetImageUtils.getBMFromUri(this,"headIconUri");
+        if (headIcon != null){
+            navHeaderIV.setImageBitmap(headIcon);
+        }
+        //背景,有问题，图片会被拉伸
+        Bitmap backGround = GetImageUtils.getBMFromUri(this,"bgUri");
+        if(backGround != null){
+            Drawable drawable = new BitmapDrawable(backGround);
+
+            navHeaderLL.setBackground(new BitmapDrawable(backGround));
+        }
+        //个性签名
+        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
+        String signature = sp.getString(Constant.SIGNATURE,"唱情歌落俗");
+        signatureTV.setText(signature);
+        super.onStart();
     }
 
 }

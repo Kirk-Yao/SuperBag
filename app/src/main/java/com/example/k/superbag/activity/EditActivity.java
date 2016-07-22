@@ -1,6 +1,5 @@
 package com.example.k.superbag.activity;
 
-import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.AlarmManager;
 import android.app.AlertDialog;
@@ -10,10 +9,8 @@ import android.app.TimePickerDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.drawable.BitmapDrawable;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
@@ -22,6 +19,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.DatePicker;
 import android.widget.EditText;
@@ -42,7 +40,6 @@ import com.example.k.superbag.utils.GetImageUtils;
 import com.example.k.superbag.utils.SuperbagDatabaseHelper;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -52,7 +49,6 @@ import java.util.List;
  * Created by K on 2016/6/26.
  */
 
-// 不能选标签，提醒时间等
 public class EditActivity extends Activity implements View.OnClickListener,RadioGroup.OnCheckedChangeListener,ViewPager.OnPageChangeListener{
 
     private Button backBT,saveBT,picBT,faceBT,weatherBT,locationBT,editAlarm;
@@ -70,14 +66,18 @@ public class EditActivity extends Activity implements View.OnClickListener,Radio
     private boolean hasSaved = false;
     private Uri imageUri;
     private boolean isMemo;
-    private String previousTime,newTime = "-1";
+    private String newTime = "-1";
     private boolean isEditable = true;
     private List<View> popupViewList;
     private boolean clickable = false;
 
+    private List<Uri> uriList;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        //为了进入activity时，不自动弹出键盘
+        getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_HIDDEN);
         setContentView(R.layout.activity_edit);
 
         initView();
@@ -150,14 +150,9 @@ public class EditActivity extends Activity implements View.OnClickListener,Radio
 
     private void initData(){
         GetTime gt = new GetTime();
-        /*Log.d("年份",gt.getYear()+"");
-        Log.d("月",gt.getMonth()+"");
-        Log.d("日",gt.getDay()+"");
-        Log.d("小时",gt.getHour()+"");
-        Log.d("分钟",gt.getMin()+"");*/
-
         oldTime.setText(gt.getYear()+"-"+gt.getMonth()+"-"+gt.getDay());
 
+        uriList = new ArrayList<>();
         //如果是从ListView点击进入活动，则初始化数据
         Intent intent = getIntent();
         int lineNum = intent.getIntExtra("lineIndex",-1);
@@ -165,7 +160,9 @@ public class EditActivity extends Activity implements View.OnClickListener,Radio
             ItemBean item = SuperbagDatabaseHelper.queryBD(lineNum);
             bottomLL.setVisibility(View.GONE);
             saveBT.setBackground(getResources().getDrawable(R.drawable.edit));
-            contentET.setClickable(false);
+            contentET.setFocusable(false);
+//            contentET.setFocusableInTouchMode(false);
+
             contentET.setText(item.getContent());
             if(item.getIsMemo().equals("true")){
                 editMemo.setChecked(true);
@@ -177,8 +174,6 @@ public class EditActivity extends Activity implements View.OnClickListener,Radio
             }
             isEditable = false;
         }
-        doneBT.setEnabled(clickable);
-        cancelBT.setEnabled(clickable);
     }
 
     @Override
@@ -211,6 +206,7 @@ public class EditActivity extends Activity implements View.OnClickListener,Radio
                 if (!isEditable){
                     saveBT.setBackground(getResources().getDrawable(R.drawable.save));
                     bottomLL.setVisibility(View.VISIBLE);
+                    contentET.setFocusable(true);
                     contentET.setClickable(true);
                     isEditable = true;
                 } else {
@@ -227,15 +223,15 @@ public class EditActivity extends Activity implements View.OnClickListener,Radio
 
                 break;
             case R.id.edit_pic_bt:
-                Log.d("已点击","插入图片");
-                LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+//                Log.d("已点击","插入图片");
+//                LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
 //                params.setMargins(0,0,0,600);
 //                params.bottomMargin = 400;
 //                bottomLL.setLayoutParams(params);
 //                popupWindow.showAsDropDown(view);
 //                popupWindow.showAtLocation(findViewById(R.id.edit_ll),Gravity.BOTTOM,0,0);
-                Log.d("popup是否显示：",popupWindow.isShowing()+"");
-                /*final AlertDialog.Builder builder = new AlertDialog.Builder(EditActivity.this);
+//                Log.d("popup是否显示：",popupWindow.isShowing()+"");
+                final AlertDialog.Builder builder = new AlertDialog.Builder(EditActivity.this);
                 builder.setMessage("选择图片来源")
                         .setNegativeButton("拍照", new DialogInterface.OnClickListener() {
                             @Override
@@ -249,7 +245,7 @@ public class EditActivity extends Activity implements View.OnClickListener,Radio
                                 selectFromAlbum();
                             }
                         });
-                builder.show();*/
+                builder.show();
                 break;
             case R.id.edit_alarm:
                 setAlarmPopup();
@@ -285,6 +281,7 @@ public class EditActivity extends Activity implements View.OnClickListener,Radio
         alarmPOpup.showAsDropDown(findViewById(R.id.edit_alarm));
     }
 
+    //设置提醒时间
     private void setTime(){
         Calendar calendar = Calendar.getInstance();
         final Calendar c = Calendar.getInstance();
@@ -344,7 +341,29 @@ public class EditActivity extends Activity implements View.OnClickListener,Radio
         String content = contentET.getText().toString().trim();
         SuperbagDatabaseHelper dbHelper = new SuperbagDatabaseHelper(this,"superbag.db",null,1);
         GetTime gt = new GetTime();
-        dbHelper.insertToDB("暂无分类",content,isMemo,2,gt.getSpecificTime(),newTime);
+        //根据插入图片个数保存，有待完善
+        switch (uriList.size()){
+            case 0:
+                dbHelper.insertToDB("暂无分类",content,isMemo,2,gt.getSpecificTime(), newTime,
+                        null,null,null,null);
+                break;
+            case 1:
+                dbHelper.insertToDB("暂无分类",content,isMemo,2,gt.getSpecificTime(), newTime,
+                        uriList.get(0).toString(),null,null,null);
+                break;
+            case 2:
+                dbHelper.insertToDB("暂无分类",content,isMemo,2,gt.getSpecificTime(), newTime,
+                        uriList.get(0).toString(),uriList.get(1).toString(),null,null);
+                break;
+            case 3:
+                dbHelper.insertToDB("暂无分类",content,isMemo,2,gt.getSpecificTime(), newTime,
+                        uriList.get(0).toString(),uriList.get(1).toString(),uriList.get(2).toString(),null);
+                break;
+            case 4:
+                dbHelper.insertToDB("暂无分类",content,isMemo,2,gt.getSpecificTime(), newTime,
+                        uriList.get(0).toString(),uriList.get(1).toString(),uriList.get(2).toString(),uriList.get(3).toString());
+                break;
+        }
         Log.d("已执行保存操作","");
     }
 
@@ -361,17 +380,9 @@ public class EditActivity extends Activity implements View.OnClickListener,Radio
     protected void onActivityResult(int requestCode,int resultCode,Intent data){
         switch (requestCode){
             case 1:
-                Log.d("before handle","");
-                Toast.makeText(EditActivity.this,"处理中",Toast.LENGTH_SHORT).show();
-                if(resultCode != RESULT_OK){
-                    try {
-                        //处理图片
-                        Log.d("处理图片中","");
-                        Bitmap bitmap = BitmapFactory.decodeStream(getContentResolver().openInputStream(imageUri));
-                        //
-                    } catch (FileNotFoundException e) {
-                        e.printStackTrace();
-                    }
+                if(resultCode == RESULT_OK){
+                    imageUri = data.getData();
+                    uriList.add(imageUri);
                 }
                 break;
             default:
@@ -383,10 +394,8 @@ public class EditActivity extends Activity implements View.OnClickListener,Radio
 
     //从相册选取
     private void selectFromAlbum(){
-        createUri();
         Intent intent = new Intent("android.intent.action.GET_CONTENT");
-        intent.setType("image/**");
-        intent.putExtra(MediaStore.EXTRA_OUTPUT,imageUri);
+        intent.setType("image/*");
         startActivityForResult(intent,1);
     }
 

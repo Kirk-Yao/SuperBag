@@ -5,6 +5,7 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.net.Uri;
 import android.util.Log;
 
 import com.example.k.superbag.bean.ItemBean;
@@ -25,7 +26,11 @@ public class SuperbagDatabaseHelper extends SQLiteOpenHelper {
             +"isMemo blob,"
             +"importance integer,"
             +"oldTime text,"
-            +"newTime text"
+            +"newTime text,"
+            +"pic1 text,"
+            +"pic2 text,"
+            +"pic3 text,"
+            +"pic4 text"
             +")";
 
     private static Context cxt;
@@ -58,13 +63,16 @@ public class SuperbagDatabaseHelper extends SQLiteOpenHelper {
     }
 
     public void insertToDB(String tag,String content,boolean isMemo,int importance,
-                           String oldTime,String newTime){
+                           String oldTime,String newTime,
+                           String pic1,String pic2,String pic3,String pic4){
         Log.d("正在插入数据","...");
         if (db == null){
             getDatabase();
         }
-        db.execSQL("insert into superbag(tag,content,isMemo,importance,oldTime,newTime)" +
-                "values(?,?,?,?,?,?)",new String[] {tag,content,isMemo+"",importance+"",oldTime,newTime});
+
+        db.execSQL("insert into superbag(tag,content,isMemo,importance,oldTime,newTime,pic1,pic2,pic3,pic4)" +
+                "values(?,?,?,?,?,?,?,?,?,?)",new String[] {tag,content,isMemo+"",
+                importance+"",oldTime,newTime,pic1,pic2,pic3,pic4});
     }
 
     private void updateDB(SQLiteDatabase db, ContentValues values){
@@ -88,15 +96,7 @@ public class SuperbagDatabaseHelper extends SQLiteOpenHelper {
         Log.d("长度是",cursor.getCount()+"");
         if (cursor.moveToNext()){
             do {
-                String tag = cursor.getString(cursor.getColumnIndex("tag"));
-                String content = cursor.getString(cursor.getColumnIndex("content"));
-                String oldTime = cursor.getString(cursor.getColumnIndex("oldTime"));
-                String isMemo = cursor.getString(cursor.getColumnIndex("isMemo"));
-                Log.d("tag 是",tag);
-                Log.d("content 是",content);
-                Log.d("是否备忘",isMemo);
-                Log.d("旧时间是",oldTime);
-                ItemBean item = new ItemBean(tag,content,isMemo,1,oldTime,"2020");
+                ItemBean item = getContent(cursor);
                 list.add(item);
             } while (cursor.moveToNext());
         }
@@ -117,18 +117,47 @@ public class SuperbagDatabaseHelper extends SQLiteOpenHelper {
         Log.d("cursor长度",cursor.getColumnCount()+"");
 
         if (cursor.moveToPosition(lineIndex)){
-
-                String tag = cursor.getString(cursor.getColumnIndex("tag"));
-                String content = cursor.getString(cursor.getColumnIndex("content"));
-                String oldTime = cursor.getString(cursor.getColumnIndex("oldTime"));
-                String isMemo = cursor.getString(cursor.getColumnIndex("isMemo"));
-                Log.d("查询结果---tag 是",tag);
-                Log.d("查询结果---content 是",content);
-                Log.d("查询结果---是否备忘",isMemo);
-                Log.d("查询结果---旧时间是",oldTime);
-                item = new ItemBean(tag,content,isMemo,1,oldTime,"2020");
+            item = getContent(cursor);
         }
         cursor.close();
+        return item;
+    }
+
+    private static ItemBean getContent(Cursor cursor){
+
+        String tag = cursor.getString(cursor.getColumnIndex("tag"));
+        String content = cursor.getString(cursor.getColumnIndex("content"));
+        String oldTime = cursor.getString(cursor.getColumnIndex("oldTime"));
+        String isMemo = cursor.getString(cursor.getColumnIndex("isMemo"));
+        String pic1 = cursor.getString(cursor.getColumnIndex("pic1"));
+        String pic2 = cursor.getString(cursor.getColumnIndex("pic2"));
+        String pic3 = cursor.getString(cursor.getColumnIndex("pic3"));
+        String pic4 = cursor.getString(cursor.getColumnIndex("pic4"));
+
+        Log.d("tag 是",tag);
+        Log.d("content 是",content);
+        Log.d("是否备忘",isMemo);
+        Log.d("旧时间是",oldTime);
+        //---------------
+        List<Uri> picList = new ArrayList<>();
+        if (pic1 != null) {
+            Uri uri1 = Uri.parse(pic1);
+            picList.add(uri1);
+        }
+        if (pic2 != null){
+            Uri uri2 = Uri.parse(pic2);
+            picList.add(uri2);
+        }
+        if (pic3 != null){
+            Uri uri3 = Uri.parse(pic3);
+            picList.add(uri3);
+        }
+        if (pic4 != null){
+            Uri uri4 = Uri.parse(pic4);
+            picList.add(uri4);
+        }
+
+        ItemBean item = new ItemBean(tag,content,isMemo,1,oldTime,"2020",picList);
         return item;
     }
 

@@ -1,6 +1,7 @@
 package com.example.k.superbag.bean;
 
 import android.graphics.drawable.Drawable;
+import android.net.Uri;
 
 import java.util.List;
 
@@ -18,13 +19,17 @@ public class ItemBean {
     private String isMemo;
     private int importance;
 
-    public ItemBean(String tag,String content,String isMemo,int importance,String oldTime,String newTime){
+    private List<Uri> picList;
+
+    public ItemBean(String tag, String content, String isMemo,
+                    int importance, String oldTime, String newTime, List<Uri> picList){
         this.tag = tag;
         this.content = content;
         this.isMemo = isMemo;
         this.importance = importance;
         this.oldTime = oldTime;
         this.newTime = newTime;
+        this.picList = picList;
     }
 
     public ItemBean(){}
@@ -91,5 +96,13 @@ public class ItemBean {
 
     public void setImportance(int importance) {
         this.importance = importance;
+    }
+
+    public int getPicNum() {
+        return picList.size();
+    }
+
+    public List<Uri> getPicList(){
+        return picList;
     }
 }

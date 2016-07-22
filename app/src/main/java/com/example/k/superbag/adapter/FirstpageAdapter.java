@@ -2,6 +2,7 @@ package com.example.k.superbag.adapter;
 
 import android.content.ClipData;
 import android.content.Context;
+import android.graphics.Bitmap;
 import android.media.Image;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -15,6 +16,7 @@ import com.example.k.superbag.Fragment.FirstPageFragment;
 import com.example.k.superbag.R;
 import com.example.k.superbag.bean.ItemBean;
 import com.example.k.superbag.others.ListItem;
+import com.example.k.superbag.utils.GetImageUtils;
 
 import java.util.List;
 
@@ -23,12 +25,21 @@ import java.util.List;
  */
 public class FirstpageAdapter extends ArrayAdapter<ItemBean> {
 
-    private List<ListItem> lists = FirstPageFragment.list;
     private List<ItemBean> itemBeanList;
 
     public FirstpageAdapter(Context context, int resource, List<ItemBean> objects) {
         super(context, resource, objects);
         itemBeanList = objects;
+    }
+
+    @Override
+    public int getCount() {
+        return itemBeanList.size();
+    }
+
+    @Override
+    public ItemBean getItem(int position) {
+        return itemBeanList.get(position);
     }
 
     //根据图片数量的不同加载不同的布局
@@ -57,7 +68,6 @@ public class FirstpageAdapter extends ArrayAdapter<ItemBean> {
                 }
                 //-----------------
                 //具体逻辑处理
-//                ItemBean itemBean = itemBeanList.get(position);
                 holder0.tag1.setText(itemBean.getTag());
                 holder0.content.setText(itemBean.getContent());
                 holder0.oldTime.setText(itemBean.getOldTime());
@@ -82,7 +92,12 @@ public class FirstpageAdapter extends ArrayAdapter<ItemBean> {
                 }
                 //-----------------
                 //具体逻辑处理
-
+                Log.d("执行到有图片的adapter","");
+                holder1.tag1.setText(itemBean.getTag());
+                holder1.content.setText(itemBean.getContent());
+                holder1.oldTime.setText(itemBean.getOldTime());
+                Bitmap pic = GetImageUtils.getBMFromUri(getContext(),itemBean.getPicList().get(0));
+                holder1.iv.setImageBitmap(pic);
                 break;
             case ListItem.TYPE_TWO_PIC:
                 Pic2ViewHolder holder2 = null;
@@ -104,7 +119,13 @@ public class FirstpageAdapter extends ArrayAdapter<ItemBean> {
                 }
                 //-----------------
                 //具体逻辑处理
-
+                holder2.tag1.setText(itemBean.getTag());
+                holder2.content.setText(itemBean.getContent());
+                holder2.oldTime.setText(itemBean.getOldTime());
+                Bitmap pic1 = GetImageUtils.getBMFromUri(getContext(),itemBean.getPicList().get(0));
+                holder2.iv1.setImageBitmap(pic1);
+                Bitmap pic2 = GetImageUtils.getBMFromUri(getContext(),itemBean.getPicList().get(1));
+                holder2.iv2.setImageBitmap(pic2);
                 break;
 
         }
@@ -113,11 +134,8 @@ public class FirstpageAdapter extends ArrayAdapter<ItemBean> {
 
     @Override
     public int getItemViewType(int position) {
-        /*if (lists != null && position < lists.size()){
-            return lists.get(position).getType();
-        }
-        return super.getItemViewType(position);*/
-        return lists.get(0).getType();
+        //根据数据库中保存的图片uri数目来确定类型
+        return getItem(position).getPicNum();
     }
 
     @Override

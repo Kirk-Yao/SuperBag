@@ -2,9 +2,10 @@ package com.example.k.superbag.activity;
 
 import android.annotation.TargetApi;
 import android.app.Activity;
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -12,13 +13,15 @@ import android.os.Environment;
 import android.preference.PreferenceManager;
 import android.provider.MediaStore;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.View;
+import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.k.superbag.R;
-import com.example.k.superbag.utils.GetImageUtils;
+import com.example.k.superbag.others.Constant;
 
 import java.io.File;
 import java.io.IOException;
@@ -29,7 +32,7 @@ import java.io.IOException;
  */
 public class SettingsActivity extends Activity implements View.OnClickListener{
 
-    private LinearLayout changeHeadLL,changeBgLL,uploadLL,downloadLL,aboutLL;
+    private LinearLayout changeHeadLL,changeBgLL,uploadLL,downloadLL,aboutLL,changeSignLL;
     private TextView changeHeadStatus,changeBgStatus;
     private Uri imageUri;
 
@@ -50,6 +53,7 @@ public class SettingsActivity extends Activity implements View.OnClickListener{
         changeHeadStatus = (TextView)findViewById(R.id.change_head_status);
         changeBgStatus = (TextView)findViewById(R.id.change_bg_status);
         aboutLL = (LinearLayout)findViewById(R.id.about_ll);
+        changeSignLL = (LinearLayout)findViewById(R.id.change_signature_ll);
 
         SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(SettingsActivity.this);
         if (sp.getBoolean("HEAD_CHANGED",false)){
@@ -67,6 +71,7 @@ public class SettingsActivity extends Activity implements View.OnClickListener{
         uploadLL.setOnClickListener(this);
         downloadLL.setOnClickListener(this);
         aboutLL.setOnClickListener(this);
+        changeSignLL.setOnClickListener(this);
     }
 
     @Override
@@ -78,10 +83,35 @@ public class SettingsActivity extends Activity implements View.OnClickListener{
             case R.id.change_bg_ll:
                 selectFromAlbum(2);
                 break;
+            case R.id.change_signature_ll:
+                changeSignature();
+                break;
             case R.id.about_ll:
                 Toast.makeText(SettingsActivity.this,"两个大帅比的作品",Toast.LENGTH_SHORT).show();
                 break;
         }
+    }
+
+    private void changeSignature(){
+        View v = LayoutInflater.from(this).inflate(R.layout.set_signature,null);
+        final EditText signET = (EditText)v.findViewById(R.id.sign_edittext);
+        AlertDialog.Builder builder= new AlertDialog.Builder(this);
+        builder.setView(v)
+                .setTitle("修改个性签名")
+                
+                .setCancelable(true)
+                .setPositiveButton("确定", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i) {
+                        SharedPreferences.Editor editor = PreferenceManager.getDefaultSharedPreferences(SettingsActivity.this).edit();
+                        String signature = signET.getText().toString().trim();
+                        editor.putString(Constant.SIGNATURE,signature);
+                        editor.commit();
+                        Toast.makeText(SettingsActivity.this,"修改成功！",Toast.LENGTH_SHORT).show();
+                    }
+                })
+                .show();
+
     }
 
     /**

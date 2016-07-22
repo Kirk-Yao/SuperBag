@@ -15,10 +15,11 @@ import java.io.FileNotFoundException;
  */
 public class GetImageUtils {
 
-    //根据Uri得到图片
+    //根据Uri得到图片,用于保存在sharedPreference中的
     //有bug
     public static Bitmap getBMFromUri(Context context,String name){
         Uri uri = getUri(context,name);
+        Log.d("得到的图片uri是--",name);
         Bitmap bitmap = null;
         try {
 //            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
@@ -38,5 +39,16 @@ public class GetImageUtils {
         Uri headUri = Uri.parse(head);
         Log.d(name+"是--",head);
         return headUri;
+    }
+
+    public static Bitmap getBMFromUri(Context context,Uri uri){
+        Bitmap bitmap = null;
+        try {
+            bitmap = BitmapFactory.decodeStream(context.getContentResolver().openInputStream(uri));
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+            Log.d("","图片uri错误");
+        }
+        return bitmap;
     }
 }

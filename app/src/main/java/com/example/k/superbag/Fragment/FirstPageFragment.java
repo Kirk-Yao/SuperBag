@@ -2,13 +2,8 @@ package com.example.k.superbag.Fragment;
 
 import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
-import android.preference.PreferenceManager;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.util.Log;
@@ -29,7 +24,6 @@ import com.example.k.superbag.others.ListItem;
 import com.example.k.superbag.utils.GetImageUtils;
 import com.example.k.superbag.utils.SuperbagDatabaseHelper;
 
-import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -51,21 +45,29 @@ public class FirstPageFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View v = inflater.inflate(R.layout.fragment_firstpage,container,false);
 
+        Log.d("执行到了","first的onCreate()");
         context = getContext();
         fPBackgroundIV = (ImageView)v.findViewById(R.id.top_background);
         fPHeadIconIV = (ImageView)v.findViewById(R.id.top_head_icon);
         fPSummaryTV = (TextView)v.findViewById(R.id.top_summary);
         fPListView = (ListView)v.findViewById(R.id.firstPage_lv);
 
-        Intent intent = new Intent();
+        //好像没什么用
+/*        Intent intent = new Intent();
         takeFlags = intent.getFlags()
                 & (Intent.FLAG_GRANT_READ_URI_PERMISSION
-                | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+                | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);*/
 
         initView();
-        initData();
-        initListView();
         return v;
+    }
+
+    //将ListView的设置写在onStart()中，则可以动态刷新adapter
+    @Override
+    public void onStart() {
+        initView();
+        initListView();
+        super.onStart();
     }
 
     //根据本地存储的数据，初始化背景，头像
@@ -88,22 +90,13 @@ public class FirstPageFragment extends Fragment {
 
     }
 
-    private void initData(){
-        ListItem item1 = new ListItem("0pic",0);
-        ListItem item2 = new ListItem("1pic",1);
-        ListItem item3 = new ListItem("2pic",2);
-        list.add(item1);
-        list.add(item2);
-        list.add(item3);
-    }
-
     private void initListView(){
-        //有bug，无法确定具体加载哪个布局，adapter不明确
         SuperbagDatabaseHelper helper = new SuperbagDatabaseHelper(context,"superbag.db",null,1);
         final List<ItemBean> itemBeanList = helper.queryBD();
         Log.d("列表长度：",itemBeanList.size()+"");
         FirstpageAdapter adapter = new FirstpageAdapter(context,R.layout.item_fp_1pic,itemBeanList);
         fPListView.setAdapter(adapter);
+        //----------------
         setListViewHeightBasedOnChildren(fPListView);
         adapter.notifyDataSetChanged();
 
@@ -139,21 +132,6 @@ public class FirstPageFragment extends Fragment {
         });
     }
 
-    /*//根据Uri得到图片
-    //有bug
-    private Bitmap getBMFromUri(Uri uri){
-        Bitmap bitmap = null;
-        try {
-//            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-//                getContext().getContentResolver().takePersistableUriPermission(uri,takeFlags);
-//            }
-            bitmap = BitmapFactory.decodeStream(context.getContentResolver().openInputStream(uri));
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        }
-        return bitmap;
-    }*/
-
     /**
      * 为了解决ListView在ScrollView中只能显示一行数据的问题
      *
@@ -167,10 +145,12 @@ public class FirstPageFragment extends Fragment {
         }
 
         int totalHeight = 0;
-        for (int i = 0, len = listAdapter.getCount(); i < len; i++) { // listAdapter.getCount()返回数据项的数目
+        for (int i = 0, len = listAdapter.getCount(); i < len; i++) {
+            // listAdapter.getCount()返回数据项的数目
             View listItem = listAdapter.getView(i, null, listView);
             listItem.measure(0, 0); // 计算子项View 的宽高
             totalHeight += listItem.getMeasuredHeight(); // 统计所有子项的总高度
+
         }
 
         ViewGroup.LayoutParams params = listView.getLayoutParams();
