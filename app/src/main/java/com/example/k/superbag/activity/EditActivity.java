@@ -16,11 +16,14 @@ import android.os.Environment;
 import android.provider.MediaStore;
 import android.support.v4.view.ViewPager;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.Button;
+import android.widget.CheckBox;
+import android.widget.CompoundButton;
 import android.widget.DatePicker;
 import android.widget.EditText;
 import android.widget.ImageView;
@@ -42,6 +45,7 @@ import com.example.k.superbag.utils.SuperbagDatabaseHelper;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.List;
 
@@ -49,9 +53,11 @@ import java.util.List;
  * Created by K on 2016/6/26.
  */
 
-public class EditActivity extends Activity implements View.OnClickListener,RadioGroup.OnCheckedChangeListener,ViewPager.OnPageChangeListener{
+public class EditActivity extends Activity implements
+        View.OnClickListener,RadioGroup.OnCheckedChangeListener,ViewPager.OnPageChangeListener,
+        CheckBox.OnCheckedChangeListener{
 
-    private Button backBT,saveBT,picBT,faceBT,weatherBT,locationBT,editAlarm;
+    private Button backBT,saveBT,picBT,faceBT,weatherBT,locationBT,editAlarm,feelingsBT;
     private EditText contentET;
     private RadioGroup radioGroup;
     private ImageView headIcon;
@@ -61,7 +67,12 @@ public class EditActivity extends Activity implements View.OnClickListener,Radio
     private PopupWindow popupWindow,alarmPOpup;
     private ImageView popupPic1,popupPic2,popupPic3,popupPic4;
     private ViewPager viewPager;
-    private Button setTimeBT,doneBT,cancelBT;
+    private Button setTimeBT,doneBT,cancelBT,addTagBT;
+    private TextView tag2TV,tag3TV;
+    private CheckBox sunnyCK,cloudyCk,rainyCK,snowyCk,foggyCK,hazeCK;
+    private AlertDialog weatherDialog;
+    private CheckBox happyCK,sweetCK,unforgettableCK,calmCK,angryCk,aggrievedCK,sadCK,noFeelingsCK;
+    private AlertDialog feelingsDialog;
 
     private boolean hasSaved = false;
     private Uri imageUri;
@@ -70,8 +81,17 @@ public class EditActivity extends Activity implements View.OnClickListener,Radio
     private boolean isEditable = true;
     private List<View> popupViewList;
     private boolean clickable = false;
+    private String tag1="",tag2="";
+    private int flag = 1;
 
     private List<Uri> uriList;
+
+    private List<Integer> weatherCKIdList = new ArrayList<>(Arrays.asList(R.id.sunny_checkbox,
+            R.id.cloudy_checkbox,R.id.rainy_checkbox,
+            R.id.snowy_checkbox,R.id.foggy_checkbox,R.id.haze_checkbox));
+    private String[] weatherList = {"晴","阴","雨","雪","雾","霾"};
+    private List<CheckBox> weatherCKList;
+    private int weatherIndex = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -86,13 +106,14 @@ public class EditActivity extends Activity implements View.OnClickListener,Radio
         initData();
     }
 
+
     private void initView(){
         backBT = (Button)findViewById(R.id.edit_back);
         saveBT = (Button)findViewById(R.id.edit_save);
-        picBT = (Button)findViewById(R.id.edit_pic_bt);
-        faceBT = (Button)findViewById(R.id.edit_face_bt);
+//        picBT = (Button)findViewById(R.id.edit_pic_bt);
+//        faceBT = (Button)findViewById(R.id.edit_face_bt);
         weatherBT = (Button)findViewById(R.id.edit_weather_bt);
-        locationBT = (Button)findViewById(R.id.edit_location_bt);
+//        locationBT = (Button)findViewById(R.id.edit_location_bt);
         contentET = (EditText)findViewById(R.id.edit_et);
         radioGroup = (RadioGroup)findViewById(R.id.edit_rg);
         editMemo = (RadioButton)findViewById(R.id.edit_memo);
@@ -101,8 +122,15 @@ public class EditActivity extends Activity implements View.OnClickListener,Radio
         oldTime = (TextView) findViewById(R.id.edit_time);
         backLL = (LinearLayout)findViewById(R.id.edit_back_ll);
         saveLL = (LinearLayout)findViewById(R.id.edit_save_ll);
-        bottomLL = (LinearLayout)findViewById(R.id.edit_bottom_LL);
+//        bottomLL = (LinearLayout)findViewById(R.id.edit_bottom_LL);
         editAlarm = (Button)findViewById(R.id.edit_alarm);
+        tag2TV = (TextView)findViewById(R.id.edit_tag2);
+        tag3TV = (TextView)findViewById(R.id.edit_tag3);
+        addTagBT = (Button)findViewById(R.id.add_tag_bt);
+        feelingsBT = (Button)findViewById(R.id.edit_feelings_bt);
+
+        tag2TV.setVisibility(View.GONE);
+        tag3TV.setVisibility(View.GONE);
         //设置头像
         Bitmap head = GetImageUtils.getBMFromUri(this,"headIconUri");
         if (head != null){
@@ -134,10 +162,10 @@ public class EditActivity extends Activity implements View.OnClickListener,Radio
     private void initListener(){
         backBT.setOnClickListener(this);
         saveBT.setOnClickListener(this);
-        picBT.setOnClickListener(this);
-        faceBT.setOnClickListener(this);
+//        picBT.setOnClickListener(this);
+//        faceBT.setOnClickListener(this);
         weatherBT.setOnClickListener(this);
-        locationBT.setOnClickListener(this);
+//        locationBT.setOnClickListener(this);
         radioGroup.setOnCheckedChangeListener(this);
         backLL.setOnClickListener(this);
         saveLL.setOnClickListener(this);
@@ -146,6 +174,8 @@ public class EditActivity extends Activity implements View.OnClickListener,Radio
         popupPic3.setOnClickListener(this);
         popupPic4.setOnClickListener(this);
         editAlarm.setOnClickListener(this);
+        addTagBT.setOnClickListener(this);
+        feelingsBT.setOnClickListener(this);
     }
 
     private void initData(){
@@ -154,6 +184,7 @@ public class EditActivity extends Activity implements View.OnClickListener,Radio
 
         uriList = new ArrayList<>();
         //如果是从ListView点击进入活动，则初始化数据
+        //如何让editTExt无法点击编辑，还有问题
         Intent intent = getIntent();
         int lineNum = intent.getIntExtra("lineIndex",-1);
         if (lineNum != -1){
@@ -161,7 +192,6 @@ public class EditActivity extends Activity implements View.OnClickListener,Radio
             bottomLL.setVisibility(View.GONE);
             saveBT.setBackground(getResources().getDrawable(R.drawable.edit));
             contentET.setFocusable(false);
-//            contentET.setFocusableInTouchMode(false);
 
             contentET.setText(item.getContent());
             if(item.getIsMemo().equals("true")){
@@ -171,6 +201,14 @@ public class EditActivity extends Activity implements View.OnClickListener,Radio
             if (!item.getNewTime().equals("-1")){
                 editAlarm.setBackground(getResources().getDrawable(R.drawable.alarm_blue));
                 clickable = true;
+            }
+            if (!item.getTag2().equals("")){
+                tag2TV.setVisibility(View.VISIBLE);
+                tag2TV.setText(item.getTag2());
+            }
+            if (!item.getTag3().equals("")){
+                tag3TV.setVisibility(View.VISIBLE);
+                tag3TV.setText(item.getTag3());
             }
             isEditable = false;
         }
@@ -222,7 +260,7 @@ public class EditActivity extends Activity implements View.OnClickListener,Radio
                 }
 
                 break;
-            case R.id.edit_pic_bt:
+/*            case R.id.edit_pic_bt:
 //                Log.d("已点击","插入图片");
 //                LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
 //                params.setMargins(0,0,0,600);
@@ -246,7 +284,7 @@ public class EditActivity extends Activity implements View.OnClickListener,Radio
                             }
                         });
                 builder.show();
-                break;
+                break;*/
             case R.id.edit_alarm:
                 setAlarmPopup();
                 break;
@@ -262,7 +300,115 @@ public class EditActivity extends Activity implements View.OnClickListener,Radio
                 Toast.makeText(EditActivity.this,"已取消提醒",Toast.LENGTH_SHORT).show();
                 doneBT.setEnabled(false);
                 break;
+            case R.id.add_tag_bt:
+                addTag();
+                break;
+            case R.id.edit_weather_bt:
+                chooseWeather();
+                break;
+            case R.id.edit_feelings_bt:
+                chooseFeelings();
+                break;
         }
+    }
+
+    @Override
+    public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
+        //选择天气
+        weatherIndex = compoundButton.getId();
+        String weather = weatherList[weatherCKIdList.indexOf(weatherIndex)];
+        Log.d("天气是",weather);
+        weatherCKList.get(weatherCKIdList.indexOf(weatherIndex)).setChecked(true);
+        weatherDialog.dismiss();
+        weatherBT.setText(weather);
+    }
+
+    private void chooseFeelings(){
+        View v = LayoutInflater.from(EditActivity.this).inflate(R.layout.choose_feeling,null);
+        happyCK = (CheckBox)v.findViewById(R.id.happy_checkbox);
+        sweetCK = (CheckBox)v.findViewById(R.id.happy_checkbox);
+        unforgettableCK = (CheckBox)v.findViewById(R.id.happy_checkbox);
+        calmCK = (CheckBox)v.findViewById(R.id.happy_checkbox);
+        angryCk = (CheckBox)v.findViewById(R.id.happy_checkbox);
+        aggrievedCK = (CheckBox)v.findViewById(R.id.happy_checkbox);
+        sadCK = (CheckBox)v.findViewById(R.id.happy_checkbox);
+        noFeelingsCK = (CheckBox)v.findViewById(R.id.happy_checkbox);
+        happyCK.setOnCheckedChangeListener(EditActivity.this);
+        sweetCK.setOnCheckedChangeListener(EditActivity.this);
+        unforgettableCK.setOnCheckedChangeListener(EditActivity.this);
+        calmCK.setOnCheckedChangeListener(EditActivity.this);
+        angryCk.setOnCheckedChangeListener(EditActivity.this);
+        aggrievedCK.setOnCheckedChangeListener(EditActivity.this);
+        sadCK.setOnCheckedChangeListener(EditActivity.this);
+        noFeelingsCK.setOnCheckedChangeListener(EditActivity.this);
+
+        feelingsDialog = new AlertDialog.Builder(EditActivity.this).create();
+
+    }
+
+    private void chooseWeather(){
+        weatherDialog = new AlertDialog.Builder(EditActivity.this).create();
+        View v = LayoutInflater.from(EditActivity.this).inflate(R.layout.choose_weather,null);
+        sunnyCK = (CheckBox)v.findViewById(R.id.sunny_checkbox);
+        rainyCK = (CheckBox)v.findViewById(R.id.rainy_checkbox);
+        cloudyCk = (CheckBox)v.findViewById(R.id.cloudy_checkbox);
+        snowyCk = (CheckBox)v.findViewById(R.id.snowy_checkbox);
+        foggyCK = (CheckBox)v.findViewById(R.id.foggy_checkbox);
+        hazeCK = (CheckBox)v.findViewById(R.id.haze_checkbox);
+        sunnyCK.setOnCheckedChangeListener(EditActivity.this);
+        rainyCK.setOnCheckedChangeListener(EditActivity.this);
+        cloudyCk.setOnCheckedChangeListener(EditActivity.this);
+        snowyCk.setOnCheckedChangeListener(EditActivity.this);
+        foggyCK.setOnCheckedChangeListener(EditActivity.this);
+        hazeCK.setOnCheckedChangeListener(EditActivity.this);
+        weatherCKList = new ArrayList<>
+                (Arrays.asList(sunnyCK,cloudyCk,rainyCK,snowyCk,foggyCK,hazeCK));
+
+        weatherDialog.setView(v);
+        if (weatherIndex == 0){
+            weatherCKList.get(weatherIndex).setChecked(true);
+        } else {
+            weatherCKList.get(weatherCKIdList.indexOf(weatherIndex)).setChecked(true);
+        }
+        weatherDialog.show();
+        int width = getWindowManager().getDefaultDisplay().getWidth();//得到当前显示设备的宽度，单位是像素
+        WindowManager.LayoutParams params = weatherDialog.getWindow().getAttributes();//得到这个dialog界面的参数对象
+        params.width = width/2;//设置dialog的界面宽度
+        params.height =  WindowManager.LayoutParams.WRAP_CONTENT;//设置dialog高度为包裹内容
+        params.gravity = Gravity.CENTER;//设置dialog的重心
+        //dialog.getWindow().setLayout(width-(width/6),  LayoutParams.WRAP_CONTENT);//用这个方法设置dialog大小也可以，但是这个方法不能设置重心之类的参数，推荐用Attributes设置
+        weatherDialog.getWindow().setAttributes(params);//最后把这个参数对象设置进去，即与dialog绑定
+    }
+
+    private void addTag(){
+        View v = LayoutInflater.from(EditActivity.this).inflate(R.layout.add_tag,null);
+        final EditText addTagET = (EditText) v.findViewById(R.id.add_tag_edittext);
+        final AlertDialog.Builder builder = new AlertDialog.Builder(EditActivity.this);
+        builder.setTitle("添加标签")
+                .setView(v)
+                .setCancelable(true)
+                .setPositiveButton("完成", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i) {
+                        String content = addTagET.getText().toString().trim();
+                        if (content.equals("")){
+                            Toast.makeText(EditActivity.this,"标签不能为空呦",Toast.LENGTH_SHORT).show();
+
+                        } else {
+                            if (flag % 2 == 1) {
+                                tag1 = content;
+                                tag2TV.setVisibility(View.VISIBLE);
+                                tag2TV.setText(tag1);
+                            } else {
+                                tag2 = content;
+                                tag3TV.setVisibility(View.VISIBLE);
+                                tag3TV.setText(tag2);
+                            }
+                            flag++;
+                        }
+                    }
+                });
+        builder.show();
     }
 
     private void setAlarmPopup(){
@@ -344,23 +490,23 @@ public class EditActivity extends Activity implements View.OnClickListener,Radio
         //根据插入图片个数保存，有待完善
         switch (uriList.size()){
             case 0:
-                dbHelper.insertToDB("暂无分类",content,isMemo,2,gt.getSpecificTime(), newTime,
+                dbHelper.insertToDB("",tag1,tag2,content,isMemo,2,gt.getSpecificTime(), newTime,
                         null,null,null,null);
                 break;
             case 1:
-                dbHelper.insertToDB("暂无分类",content,isMemo,2,gt.getSpecificTime(), newTime,
+                dbHelper.insertToDB("",tag1,tag2,content,isMemo,2,gt.getSpecificTime(), newTime,
                         uriList.get(0).toString(),null,null,null);
                 break;
             case 2:
-                dbHelper.insertToDB("暂无分类",content,isMemo,2,gt.getSpecificTime(), newTime,
+                dbHelper.insertToDB("",tag1,tag2,content,isMemo,2,gt.getSpecificTime(), newTime,
                         uriList.get(0).toString(),uriList.get(1).toString(),null,null);
                 break;
             case 3:
-                dbHelper.insertToDB("暂无分类",content,isMemo,2,gt.getSpecificTime(), newTime,
+                dbHelper.insertToDB("",tag1,tag2,content,isMemo,2,gt.getSpecificTime(), newTime,
                         uriList.get(0).toString(),uriList.get(1).toString(),uriList.get(2).toString(),null);
                 break;
             case 4:
-                dbHelper.insertToDB("暂无分类",content,isMemo,2,gt.getSpecificTime(), newTime,
+                dbHelper.insertToDB("",tag1,tag2,content,isMemo,2,gt.getSpecificTime(), newTime,
                         uriList.get(0).toString(),uriList.get(1).toString(),uriList.get(2).toString(),uriList.get(3).toString());
                 break;
         }
@@ -391,7 +537,6 @@ public class EditActivity extends Activity implements View.OnClickListener,Radio
         }
     }
 
-
     //从相册选取
     private void selectFromAlbum(){
         Intent intent = new Intent("android.intent.action.GET_CONTENT");
@@ -414,12 +559,6 @@ public class EditActivity extends Activity implements View.OnClickListener,Radio
     }
 
     @Override
-    protected void onDestroy(){
-        super.onDestroy();
-        Log.d("退出执行","");
-    }
-
-    @Override
     public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
 
     }
@@ -433,4 +572,5 @@ public class EditActivity extends Activity implements View.OnClickListener,Radio
     public void onPageScrollStateChanged(int state) {
 
     }
+
 }

@@ -68,7 +68,22 @@ public class FirstpageAdapter extends ArrayAdapter<ItemBean> {
                 }
                 //-----------------
                 //具体逻辑处理
-                holder0.tag1.setText(itemBean.getTag());
+                if (itemBean.getIsMemo().equals("true")) {
+                    holder0.tag1.setText("备忘");
+                } else {
+                    holder0.tag1.setText("日记");
+                }
+                if (itemBean.getTag2().equals("")){
+                    holder0.tag2.setVisibility(View.GONE);
+                } else {
+                    holder0.tag2.setText(itemBean.getTag2());
+                }
+                if (itemBean.getTag3().equals("")){
+                    holder0.tag3.setVisibility(View.GONE);
+                } else {
+                    holder0.tag3.setText(itemBean.getTag3());
+                }
+
                 holder0.content.setText(itemBean.getContent());
                 holder0.oldTime.setText(itemBean.getOldTime());
                 Log.d("执行到","没有图片的adapter");
@@ -93,7 +108,22 @@ public class FirstpageAdapter extends ArrayAdapter<ItemBean> {
                 //-----------------
                 //具体逻辑处理
                 Log.d("执行到有图片的adapter","");
-                holder1.tag1.setText(itemBean.getTag());
+                if (itemBean.getIsMemo().equals("true")) {
+                    holder1.tag1.setText("备忘");
+                } else {
+                    holder1.tag1.setText("日记");
+                }
+                if (itemBean.getTag2().equals("")){
+                    holder1.tag2.setVisibility(View.GONE);
+                } else {
+                    holder1.tag2.setText(itemBean.getTag2());
+                }
+                if (itemBean.getTag3().equals("")){
+                    holder1.tag3.setVisibility(View.GONE);
+                } else {
+                    holder1.tag3.setText(itemBean.getTag3());
+                }
+
                 holder1.content.setText(itemBean.getContent());
                 holder1.oldTime.setText(itemBean.getOldTime());
                 Bitmap pic = GetImageUtils.getBMFromUri(getContext(),itemBean.getPicList().get(0));
@@ -119,7 +149,22 @@ public class FirstpageAdapter extends ArrayAdapter<ItemBean> {
                 }
                 //-----------------
                 //具体逻辑处理
-                holder2.tag1.setText(itemBean.getTag());
+                if (itemBean.getIsMemo().equals("true")) {
+                    holder2.tag1.setText("备忘");
+                } else {
+                    holder2.tag1.setText("日记");
+                }
+                if (itemBean.getTag2().equals("")){
+                    holder2.tag2.setVisibility(View.GONE);
+                } else {
+                    holder2.tag2.setText(itemBean.getTag2());
+                }
+                if (itemBean.getTag3().equals("")){
+                    holder2.tag3.setVisibility(View.GONE);
+                } else {
+                    holder2.tag3.setText(itemBean.getTag3());
+                }
+
                 holder2.content.setText(itemBean.getContent());
                 holder2.oldTime.setText(itemBean.getOldTime());
                 Bitmap pic1 = GetImageUtils.getBMFromUri(getContext(),itemBean.getPicList().get(0));

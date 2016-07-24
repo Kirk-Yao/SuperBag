@@ -21,7 +21,9 @@ public class SuperbagDatabaseHelper extends SQLiteOpenHelper {
 
     private static final String CREATE_DB = "create table superbag("
             +"id integer primary key autoincrement,"
-            +"tag text,"
+            +"tag1 text,"
+            +"tag2 text,"
+            +"tag3 text,"
             +"content text,"
             +"isMemo blob,"
             +"importance integer,"
@@ -62,7 +64,8 @@ public class SuperbagDatabaseHelper extends SQLiteOpenHelper {
 
     }
 
-    public void insertToDB(String tag,String content,boolean isMemo,int importance,
+    public void insertToDB(String tag1,String tag2,String tag3,
+                           String content,boolean isMemo,int importance,
                            String oldTime,String newTime,
                            String pic1,String pic2,String pic3,String pic4){
         Log.d("正在插入数据","...");
@@ -70,8 +73,8 @@ public class SuperbagDatabaseHelper extends SQLiteOpenHelper {
             getDatabase();
         }
 
-        db.execSQL("insert into superbag(tag,content,isMemo,importance,oldTime,newTime,pic1,pic2,pic3,pic4)" +
-                "values(?,?,?,?,?,?,?,?,?,?)",new String[] {tag,content,isMemo+"",
+        db.execSQL("insert into superbag(tag1,tag2,tag3,content,isMemo,importance,oldTime,newTime,pic1,pic2,pic3,pic4)" +
+                "values(?,?,?,?,?,?,?,?,?,?,?,?)",new String[] {tag1,tag2,tag3,content,isMemo+"",
                 importance+"",oldTime,newTime,pic1,pic2,pic3,pic4});
     }
 
@@ -125,7 +128,9 @@ public class SuperbagDatabaseHelper extends SQLiteOpenHelper {
 
     private static ItemBean getContent(Cursor cursor){
 
-        String tag = cursor.getString(cursor.getColumnIndex("tag"));
+        String tag1 = cursor.getString(cursor.getColumnIndex("tag1"));
+        String tag2 = cursor.getString(cursor.getColumnIndex("tag2"));
+        String tag3 = cursor.getString(cursor.getColumnIndex("tag3"));
         String content = cursor.getString(cursor.getColumnIndex("content"));
         String oldTime = cursor.getString(cursor.getColumnIndex("oldTime"));
         String isMemo = cursor.getString(cursor.getColumnIndex("isMemo"));
@@ -134,7 +139,6 @@ public class SuperbagDatabaseHelper extends SQLiteOpenHelper {
         String pic3 = cursor.getString(cursor.getColumnIndex("pic3"));
         String pic4 = cursor.getString(cursor.getColumnIndex("pic4"));
 
-        Log.d("tag 是",tag);
         Log.d("content 是",content);
         Log.d("是否备忘",isMemo);
         Log.d("旧时间是",oldTime);
@@ -157,7 +161,7 @@ public class SuperbagDatabaseHelper extends SQLiteOpenHelper {
             picList.add(uri4);
         }
 
-        ItemBean item = new ItemBean(tag,content,isMemo,1,oldTime,"2020",picList);
+        ItemBean item = new ItemBean(tag1,tag2,tag3,content,isMemo,1,oldTime,"2020",picList);
         return item;
     }
 

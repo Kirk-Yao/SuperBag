@@ -10,7 +10,7 @@ import java.util.List;
  */
 public class ItemBean {
 
-    private String tag;
+    private String tag1,tag2,tag3;
     private String content;
     private String oldTime;
     private String newTime;
@@ -21,9 +21,11 @@ public class ItemBean {
 
     private List<Uri> picList;
 
-    public ItemBean(String tag, String content, String isMemo,
+    public ItemBean(String tag1,String tag2,String tag3, String content, String isMemo,
                     int importance, String oldTime, String newTime, List<Uri> picList){
-        this.tag = tag;
+        this.tag1 = tag1;
+        this.tag2 = tag2;
+        this.tag3 = tag3;
         this.content = content;
         this.isMemo = isMemo;
         this.importance = importance;
@@ -82,14 +84,6 @@ public class ItemBean {
         this.isMemo = isMemo;
     }
 
-    public String getTag() {
-        return tag;
-    }
-
-    public void setTag(String tag) {
-        this.tag = tag;
-    }
-
     public int getImportance() {
         return importance;
     }
@@ -104,5 +98,29 @@ public class ItemBean {
 
     public List<Uri> getPicList(){
         return picList;
+    }
+
+    public String getTag3() {
+        return tag3;
+    }
+
+    public void setTag3(String tag3) {
+        this.tag3 = tag3;
+    }
+
+    public String getTag2() {
+        return tag2;
+    }
+
+    public void setTag2(String tag2) {
+        this.tag2 = tag2;
+    }
+
+    public String getTag1() {
+        return tag1;
+    }
+
+    public void setTag1(String tag1) {
+        this.tag1 = tag1;
     }
 }

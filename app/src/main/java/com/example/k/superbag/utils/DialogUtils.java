@@ -20,6 +20,8 @@ public class DialogUtils {
         dialog = builder.show();
     }
 
+    
+
     public static void cancelDialog(){
         dialog.dismiss();
     }
